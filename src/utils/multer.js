@@ -16,6 +16,7 @@ export const upload = multer({
     storage: storage,
     limits: { fileSize: 1024 * 1024 * 50 } // Set your file size limit
 }).fields([
-    { name: 'imageFile', maxCount: 10 }, // Adjust maxCount as needed
+    { name: 'imageFile', maxCount: 10 },
+    { name: 'profilePic', maxCount: 10 },
     { name: 'donationVideos', maxCount: 2 }
 ]);

@@ -18,7 +18,7 @@ const memberSchema = new mongoose.Schema({
   role: {
     type: String,
     default: "Member",
-  }, // e.g., Member, Volunteer, Organizer
+  }, 
   joinedAt: {
     type: Date,
     default: Date.now,
@@ -28,7 +28,7 @@ const memberSchema = new mongoose.Schema({
     state: { type: String },
     country: { type: String },
   },
-  profileImage: { type: String }, // URL to the member's profile image
+  profileImage: { type: String }, 
 },
 {
     timestamps:true

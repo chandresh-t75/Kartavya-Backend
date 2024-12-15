@@ -17,15 +17,13 @@ export const uploadDonationMedia = async (req, res) => {
     try {
       // Array to store the media URLs that were uploaded
       let uploadedMedia = [];
-  
-      // Iterate over each file in the uploaded files array
       for (let file of req.files) {
         let cloudinaryResponse;
         let mediaUrl;
         let newDonationMedia;
   
         if (file.mimetype.startsWith('image/')) {
-          // Upload the image to Cloudinary
+          
           cloudinaryResponse = await uploadFileToCloudinary(file)
   
           mediaUrl = cloudinaryResponse.secure_url; // Get the URL of the uploaded image

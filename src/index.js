@@ -5,7 +5,7 @@ import connectDB from './db/db.js';
 
 import UserRoutes from './routes/userRoutes.js';
 import UploadMediaRoutes from "./routes/uploadMediaRoutes.js"
-
+import MemberRoutes from "./routes/memberRoutes.js"
 import CampaignRoutes from './routes/campaignRoutes.js'
 import bodyParser from 'body-parser';
 dotenv.config({ path: './.env' });
@@ -33,4 +33,6 @@ app.get("/",(req,res)=>{
 app.use("/user",UserRoutes)
 app.use("/upload",UploadMediaRoutes)
 app.use("/campaign",CampaignRoutes)
+app.use("/member",MemberRoutes)
+
 

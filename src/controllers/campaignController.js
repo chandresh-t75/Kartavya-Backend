@@ -11,7 +11,6 @@ export const createCampaign = async (req, res) => {
       try {
         
         const { title, description, endDate,startDate, createdBy } = req.body;
-        console.log(req);
         const imageFile = req.files.imageFile[0].path; // Multer file data
         console.log(title, description, endDate,startDate, createdBy,imageFile);
         // Validate inputs
@@ -38,12 +37,38 @@ export const createCampaign = async (req, res) => {
         const savedCampaign = await newCampaign.save();
   
         // Respond with the created campaign data
-        res.status(201).json({
+        res.status(201).json(
          savedCampaign,
-        });
+        );
       } catch (error) {
         console.error('Error creating campaign:', error);
         res.status(500).json({ message: 'Internal server error' });
       }
     };
+
+export const getAllCampaigns = async(req,res)=>{
+  try{
+    const campaigns = await Campaign.find({}).sort({createdAt:-1});
+    res.status(200).json(campaigns);
+  }catch(error){
+    console.error('Error fetching campaigns:', error);
+    res.status(500).json({message: 'Internal server error'});
+  }
+}
   
+
+export const getParticularCampaign = async(req,res)=>{
+  const {campaignId} = req.query;
+  try{
+
+    if(!campaignId){
+      return res.status(400).json({message: 'Campaign ID is required'});
+    }
+    const campaign = await Campaign.findById({_id:campaignId})
+    res.status(200).json(campaign);
+
+  }catch(error){
+    console.error('Error fetching campaign:', error);
+    res.status(500).json({message: 'Internal server error'});
+  }
+}

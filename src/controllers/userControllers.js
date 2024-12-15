@@ -5,9 +5,12 @@ import emailValidator from "email-validator"
 import jwt from 'jsonwebtoken';
 import crypto from "crypto";
 import nodemailer from "nodemailer";
+import { uploadFileToCloudinary } from '../utils/cloudinary.js';
 
 export const createUser = async (req, res) => {
     const { name, email, password, phone } = req.body;
+
+    // console.log("createUser", name, email, password, phone)
   
     // Validate email using email-validator
     if (!emailValidator.validate(email)) {
@@ -38,9 +41,9 @@ export const createUser = async (req, res) => {
       });
   
       await newUser.save();
-      const { password, ...createdUser } = newUser;
+      const {password: _, ...createdUser } = newUser.toObject();
       
-      res.status(201).json({createdUser });
+      res.status(201).json(createdUser);
     } catch (error) {
       console.error('Error creating user:', error);
       res.status(500).json({ message: 'Internal server error.' });
@@ -76,7 +79,6 @@ export const createUser = async (req, res) => {
       });
   
       res.status(200).json({
-        message: 'Login successful.',
         token,
         user: {
           id: user._id,
@@ -84,12 +86,64 @@ export const createUser = async (req, res) => {
           email: user.email,
           isAdmin: user.isAdmin,
         },
-      });
+    });
     } catch (error) {
       console.error('Error logging in user:', error);
       res.status(500).json({ message: 'Internal server error.' });
     }
   };
+
+  export const getUser=async(req, res) => {
+       const {userId}=req.query;
+       if(!userId){
+        return res.status(400).json({ message: 'User id is required.' });
+       }
+
+       const user=await User.findById({_id: userId});
+
+       
+
+       if(!user){
+        return res.status(404).json({ message: 'User not found.' });
+       }
+       const {password:_,...userData}=user.toObject();
+       return res.status(200).json(userData);
+
+  }
+
+  export const updateProfilePic=async(req, res) => {
+     
+       const {userId}=req.body;
+       const profileImg=req.files.profilePic[0].path;
+     
+       if(!userId){
+        return res.status(400).json({ message: 'User id is required.' });
+       }
+       const imgUrl=await uploadFileToCloudinary(profileImg);
+       const updatedUser=await User.findByIdAndUpdate({_id: userId},{pic:imgUrl},{new: true});
+       if(!updatedUser){
+        return res.status(404).json({ message: 'User not found.' });
+       }
+
+       const {password:_,...userData}=updatedUser.toObject();
+       return res.status(200).json(userData);
+  }
+
+  export const updateProfile=async(req, res) => {
+     
+    const {userId,name,phone}=req.body;
+  
+    if(!userId){
+     return res.status(400).json({ message: 'User id is required.' });
+    }
+    const updatedUser=await User.findByIdAndUpdate({_id: userId},{name,phone},{new: true});
+    if(!updatedUser){
+     return res.status(404).json({ message: 'User not found.' });
+    }
+
+    const {password:_,...userData}=updatedUser.toObject();
+    return res.status(200).json(userData);
+}
 
 
 
