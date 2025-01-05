@@ -18,5 +18,5 @@ export const upload = multer({
 }).fields([
     { name: 'imageFile', maxCount: 10 },
     { name: 'profilePic', maxCount: 10 },
-    { name: 'donationVideos', maxCount: 2 }
+    { name: 'donationVideos', maxCount: 10 }
 ]);

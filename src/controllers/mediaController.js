@@ -10,76 +10,173 @@ export const uploadDonationMedia = async (req, res) => {
     const { caption, campaignId } = req.body; // Assuming these come from the frontend
   
     // Check if files are provided
-    if (!req.files || req.files.length === 0) {
+    if (!req.files || (req.files.imageFile && req.files.imageFile.length === 0 && req.files.donationVideos && req.files.donationVideos.length === 0)) {
       return res.status(400).json({ message: 'Please upload at least one image or video.' });
     }
+   
   
     try {
-      // Array to store the media URLs that were uploaded
-      let uploadedMedia = [];
-      for (let file of req.files) {
-        let cloudinaryResponse;
-        let mediaUrl;
-        let newDonationMedia;
-  
-        if (file.mimetype.startsWith('image/')) {
-          
-          cloudinaryResponse = await uploadFileToCloudinary(file)
-  
-          mediaUrl = cloudinaryResponse.secure_url; // Get the URL of the uploaded image
-  
-          // Create a new DonationImage object and save to DB
-          newDonationMedia = new DonationImage({
-            url: mediaUrl,
-            caption: caption || '', // Optional caption
-            campaign: campaignId, // Campaign reference
-          });
-  
-          // Save the donation image
-          await newDonationMedia.save();
-  
-          // Add to uploaded media list
-          uploadedMedia.push({
-            type: 'image',
-            url: mediaUrl,
-            caption: newDonationMedia.caption,
-            campaign: newDonationMedia.campaign,
-          });
-  
-        } else if (file.mimetype.startsWith('video/')) {
-          // Upload the video to Cloudinary
-          cloudinaryResponse = await uploadFileToCloudinary(file)
-  
-          mediaUrl = cloudinaryResponse.secure_url; // Get the URL of the uploaded video
-  
-          // Create a new DonationVideo object and save to DB
-          newDonationMedia = new DonationVideo({
-            url: mediaUrl,
-            caption: caption || '', // Optional caption
-            campaign: campaignId, // Campaign reference
-          });
-  
-          // Save the donation video
-          await newDonationMedia.save();
-  
-          // Add to uploaded media list
-          uploadedMedia.push({
-            type: 'video',
-            url: mediaUrl,
-            caption: newDonationMedia.caption,
-            campaign: newDonationMedia.campaign,
-          });
+        let uploadedMedia = [];
+        
+        // Handle image files
+        if (req.files.imageFile) {
+            for (let file of req.files.imageFile) {
+                let cloudinaryResponse;
+                let mediaUrl;
+                let newDonationMedia;
+                
+                if (file.mimetype.startsWith('image/')) {
+                 
+                    mediaUrl = await uploadFileToCloudinary(file.path);
+                   
+                    // console.log(file.path, cloudinaryResponse);
+
+                    newDonationMedia = new DonationImage({
+                        url: mediaUrl,
+                        caption: caption || '', // Optional caption
+                        campaign: campaignId, // Campaign reference
+                    });
+
+                    await newDonationMedia.save();
+
+                    uploadedMedia.push({
+                        type: 'image',
+                        url: mediaUrl,
+                        caption: newDonationMedia.caption,
+                        campaign: newDonationMedia.campaign,
+                    });
+                }
+            }
         }
-       
-      }
-  
-      // Return success response with all uploaded media details
-      res.status(200).json({
-        uploadedMedia
-      });
+
+        // Handle video files
+        if (req.files.donationVideos) {
+            for (let file of req.files.donationVideos) {
+                let cloudinaryResponse;
+                let mediaUrl;
+                let newDonationMedia;
+                
+                if (file.mimetype.startsWith('video/')) {
+                  mediaUrl = await uploadFileToCloudinary(file.path);
+
+                    newDonationMedia = new DonationVideo({
+                        url: mediaUrl,
+                        caption: caption || '', // Optional caption
+                        campaign: campaignId, // Campaign reference
+                    });
+
+                    await newDonationMedia.save();
+
+                    uploadedMedia.push({
+                        type: 'video',
+                        url: mediaUrl,
+                        caption: newDonationMedia.caption,
+                        campaign: newDonationMedia.campaign,
+                    });
+                }
+            }
+        }
+      
+        // Return success response with all uploaded media details
+        res.status(200).json(uploadedMedia);
     } catch (error) {
-      console.error('Error uploading media:', error);
-      res.status(500).json({ message: 'Internal server error' });
+        console.error('Error uploading media:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
-  };
-  
+};
+
+export const getCampaignImages = async (req, res) => {
+  const { campaignId, page = 1, limit = 10 } = req.query; // Default page = 1, limit = 10
+  try {
+   
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+    const skip = (pageNumber - 1) * limitNumber;
+    const images = await DonationImage.find({ campaign: campaignId })
+      .sort({ createdAt: -1 }) 
+      .skip(skip)
+      .limit(limitNumber);
+
+    
+    if (!images.length) {
+      return res.status(404).json({ message: 'No images found for this campaign.' });
+    }
+
+    res.status(200).json(images);
+  } catch (error) {
+    // Handle server error
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
+
+
+export const getCampaignVideos = async (req, res) => {
+  const { campaignId, page = 1, limit = 10 } = req.query; // Default page = 1, limit = 10
+  try {
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+    const skip = (pageNumber - 1) * limitNumber;
+    const videos = await DonationVideo.find({ campaign: campaignId })
+      .sort({ createdAt: -1 }) 
+      .skip(skip)
+      .limit(limitNumber);
+
+    
+    if (!videos.length) {
+      return res.status(404).json({ message: 'No videos found for this campaign.' });
+    }
+
+    res.status(200).json(videos);
+  } catch (error) {
+    // Handle server error
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
+
+export const getAllCampaignImages = async (req, res) => {
+  const {page = 1, limit = 10 } = req.query; // Default page = 1, limit = 10
+  try {
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+    const skip = (pageNumber - 1) * limitNumber;
+    const images = await DonationImage.find({})
+      .sort({ createdAt: -1 }) 
+      .skip(skip)
+      .limit(limitNumber);
+
+    
+    if (!images.length) {
+      return res.status(404).json({ message: 'No images found for this campaign.' });
+    }
+
+    res.status(200).json(images);
+  } catch (error) {
+    // Handle server error
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
+
+
+export const getAllCampaignVideos = async (req, res) => {
+  const { campaignId, page = 1, limit = 10 } = req.query; // Default page = 1, limit = 10
+  try {
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+    const skip = (pageNumber - 1) * limitNumber;
+    const videos = await DonationVideo.find({})
+      .sort({ createdAt: -1 }) 
+      .skip(skip)
+      .limit(limitNumber);
+
+    
+    if (!videos.length) {
+      return res.status(404).json({ message: 'No videos found for this campaign.' });
+    }
+
+    res.status(200).json(videos);
+  } catch (error) {
+    // Handle server error
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
+

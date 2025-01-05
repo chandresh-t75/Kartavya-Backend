@@ -14,7 +14,15 @@ const campaignSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  targetAmount:{
+    type:Number,
+    default:0,
+  },
   image: { // Add image field to store the image URL
+    type: String,
+    required: true,
+  },
+  location:{
     type: String,
     required: true,
   },
@@ -24,7 +32,8 @@ const campaignSchema = new mongoose.Schema({
   },
   endDate: {
     type: Date,
-    required: true,
+    default: Date.now,
+   
   },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
@@ -32,10 +41,14 @@ const campaignSchema = new mongoose.Schema({
     required: true,
   },
   
-  isActive: {
-    type: Boolean,
-    default: true,
+  status: {
+    type: String,
+    default:"Upcoming",
   },
+  likes:{
+    type: Number,
+    default:0,
+  }
 },{
     timestamps:true
 });

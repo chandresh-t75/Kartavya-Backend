@@ -2,9 +2,14 @@ import mongoose from 'mongoose';
 
 const badgeSchema = new mongoose.Schema({
   title: { type: String, required: true }, // e.g., "Bronze Donor", "Silver Donor", "Gold Donor"
-  description: { type: String, required: true }, // e.g., "Awarded for donating over $500."
-  milestoneAmount: { type: Number, required: true }, // Amount required to achieve this badge
-  icon: { type: String }, // URL for the badge icon
+  description: { type: String, required: true }, 
+  milestoneAmount: { type: Number, required: true }, 
+  userId:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  icon: { type: String },
   createdAt: { type: Date, default: Date.now },
 },{
     timestamps:true

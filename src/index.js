@@ -8,6 +8,10 @@ import UploadMediaRoutes from "./routes/uploadMediaRoutes.js"
 import MemberRoutes from "./routes/memberRoutes.js"
 import CampaignRoutes from './routes/campaignRoutes.js'
 import bodyParser from 'body-parser';
+import cors from 'cors';
+
+
+
 dotenv.config({ path: './.env' });
 const app = express();
 
@@ -16,7 +20,10 @@ const PORT=process.env.PORT || 6000;
 app.use(bodyParser.json());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); 
-
+app.use(cors({
+    origin: '*', // Replace with your frontend's origin
+    methods: ['GET', 'POST','PUT'],
+  }));
 
 connectDB().
 then(()=>{

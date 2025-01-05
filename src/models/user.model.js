@@ -5,7 +5,9 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true }, 
-  pic: { type: String},
+  pic: { type: String,
+     default:`https://www.w3schools.com/w3images/avatar2.png`
+  },
   phone: { type: String },
   isAdmin: { type: Boolean, default: false },
   donations: [
@@ -15,9 +17,8 @@ const userSchema = new mongoose.Schema({
       date: { type: Date, default: Date.now },
     },
   ],
-  totalDonated: { type: Number, default: 0 }, // Sum of all donations by the user
-  badges: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Badge' }], // Reference to badges earned
-  resetPasswordToken: { type: String }, // Token for resetting password
+  totalDonated: { type: Number, default: 0 }, 
+  resetPasswordToken: { type: String }, 
   resetPasswordExpires: { type: Date },
 },
  {

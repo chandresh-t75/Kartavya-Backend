@@ -6,53 +6,82 @@ import jwt from 'jsonwebtoken';
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 import { uploadFileToCloudinary } from '../utils/cloudinary.js';
+import Badge from '../models/badges.model.js';
 
 export const createUser = async (req, res) => {
-    const { name, email, password, phone } = req.body;
+  const { name, email, password, phone } = req.body;
+  const profileImg = req?.files?.profilePic?.[0]?.path;
 
-    // console.log("createUser", name, email, password, phone)
-  
-    // Validate email using email-validator
-    if (!emailValidator.validate(email)) {
-      return res.status(400).json({ message: 'Invalid email address.' });
+  // Validate email
+  if (!emailValidator.validate(email)) {
+    return res.status(400).json({ message: 'Invalid email address.' });
+  }
+
+  // Validate name
+  if (!name) {
+    return res.status(400).json({ message: 'Name is required.' });
+  }
+
+  // Validate password
+  if (!password) {
+    return res.status(400).json({ message: 'Password must be at least 6 characters long.' });
+  }
+
+  try {
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email already registered.' });
     }
-  
-    if (!name) {
-      return res.status(400).json({ message: 'Name is required.' });
+
+    // Upload profile image if provided
+    let imgUrl = 'https://example.com/default-avatar.png';
+    if (profileImg) {
+      imgUrl = await uploadFileToCloudinary(profileImg);
     }
-  
-    if (!password) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters long.' });
-    }
-  
-    try {
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
-        return res.status(400).json({ message: 'Email already registered.' });
-      }
-  
-      const hashedPassword = await bcrypt.hash(password, 10);
-  
-      const newUser = new User({
-        name,
-        email,
-        password: hashedPassword,
-        phone,
-      });
-  
-      await newUser.save();
-      const {password: _, ...createdUser } = newUser.toObject();
-      
-      res.status(201).json(createdUser);
-    } catch (error) {
-      console.error('Error creating user:', error);
-      res.status(500).json({ message: 'Internal server error.' });
-    }
-  };
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create new user
+    const newUser = new User({
+      name,
+      email,
+      password: hashedPassword,
+      phone,
+      pic: imgUrl || null,
+      resetPasswordToken: crypto.randomBytes(20).toString('hex'),
+      resetPasswordExpires: Date.now() + 10 * 60 * 1000, // 10 minutes expiry time
+    });
+
+    const savedUser = await newUser.save();
+
+    // Create a default badge for the new user
+    const defaultBadge = new Badge({
+      title: 'Welcome Badge',
+      description: 'Awarded for joining the platform.',
+      milestoneAmount: 0, // Default milestone for new users
+      userId: savedUser._id,
+      icon: 'https://img.icons8.com/?size=200&id=WHAG7xx9qQ8X&format=png', // Provide a default badge icon
+    });
+
+    await defaultBadge.save();
+
+    // Respond with created user details
+    const { password: _, ...createdUser } = savedUser.toObject();
+    res.status(201).json({
+      user: createdUser,
+      badge: defaultBadge,
+    });
+  } catch (error) {
+    console.error('Error creating user:', error);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+};
   
 
   export const loginUser = async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password } = req.query;
   
     // Validate email using email-validator
     if (!emailValidator.validate(email)) {
@@ -81,7 +110,7 @@ export const createUser = async (req, res) => {
       res.status(200).json({
         token,
         user: {
-          id: user._id,
+          _id: user._id,
           name: user.name,
           email: user.email,
           isAdmin: user.isAdmin,
@@ -131,12 +160,12 @@ export const createUser = async (req, res) => {
 
   export const updateProfile=async(req, res) => {
      
-    const {userId,name,phone}=req.body;
+    const {userId,name}=req.body;
   
     if(!userId){
      return res.status(400).json({ message: 'User id is required.' });
     }
-    const updatedUser=await User.findByIdAndUpdate({_id: userId},{name,phone},{new: true});
+    const updatedUser=await User.findByIdAndUpdate({_id: userId},{name},{new: true});
     if(!updatedUser){
      return res.status(404).json({ message: 'User not found.' });
     }
@@ -145,6 +174,25 @@ export const createUser = async (req, res) => {
     return res.status(200).json(userData);
 }
 
+
+export const getUserBadges = async (req, res) => {
+  const { userId } = req.query;  // Extract userId from the request params
+
+  try {
+    // Find badges where the userId matches the provided userId, and sort by createdAt (descending)
+    const badges = await Badge.find({ userId }).sort({ createdAt: -1 });
+
+    if (badges.length === 0) {
+      return res.status(404).json({ message: 'No badges found for this user.' });
+    }
+
+    // Respond with the list of badges
+    return res.status(200).json(badges);
+  } catch (error) {
+    console.error('Error fetching badges:', error);
+    return res.status(500).json({ message: 'Internal server error.' });
+  }
+};
 
 
   export const forgotPassword = async (req, res) => {
