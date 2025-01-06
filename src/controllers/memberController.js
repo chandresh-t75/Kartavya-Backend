@@ -1,6 +1,7 @@
 import express from 'express';
 import { uploadFileToCloudinary } from '../utils/cloudinary.js';
 import Member from '../models/member.model.js';
+import { Members } from '../utils/members.js';
 
 
 
@@ -121,3 +122,15 @@ export const updateMemberPic = async (req, res) => {
     }
   };
   
+
+  export const getEminentMembers=async(req,res)=>{
+    try {
+        const members=Members;
+        res.status(200).json(members);
+        
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({message: 'Internal server error'});
+        
+    }
+  }

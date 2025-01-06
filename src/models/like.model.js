@@ -2,9 +2,9 @@ import mongoose from 'mongoose';
 
 // Like schema to track which user liked which campaign
 const likeSchema = new mongoose.Schema({
-  memberId: {
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Member',  // Reference to the Member (User)
+    ref: 'User',  // Reference to the Member (User)
     required: true,
   },
   campaignId: {
@@ -22,7 +22,7 @@ const likeSchema = new mongoose.Schema({
 });
 
 // Create an index for the combination of memberId and campaignId to ensure a user can only like a campaign once
-likeSchema.index({ memberId: 1, campaignId: 1 }, { unique: true });
+likeSchema.index({ userId: 1, campaignId: 1 }, { unique: true });
 
 const Like = mongoose.model('Like', likeSchema);
 

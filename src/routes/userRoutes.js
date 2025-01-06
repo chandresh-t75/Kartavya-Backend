@@ -1,5 +1,5 @@
 import express from 'express';
-import { createUser, forgotPassword, getUser, getUserBadges, loginUser, resetPassword, updateProfile, updateProfilePic } from '../controllers/userControllers.js';
+import { createUser, forgotPassword, getUser, getUserBadges, loginUser, resetPassword, sendVerificationEmail, updateProfile, updateProfilePic, verifyEmailCode } from '../controllers/userControllers.js';
 import { upload } from '../utils/multer.js';
 
 const router=express.Router()
@@ -12,5 +12,8 @@ router.put("/update-profile",updateProfile)
 router.get("/user-badges",getUserBadges)
 router.post('/forgot-password', forgotPassword); 
 router.post('/reset-password/:token', resetPassword);
+router.post('/send-verification', sendVerificationEmail);
+router.post('/verify-email', verifyEmailCode);
+
 
 export default router;  

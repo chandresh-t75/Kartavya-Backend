@@ -7,12 +7,13 @@ import crypto from "crypto";
 import nodemailer from "nodemailer";
 import { uploadFileToCloudinary } from '../utils/cloudinary.js';
 import Badge from '../models/badges.model.js';
+import VerificationCode from '../models/verficationCode.model.js';
 
 export const createUser = async (req, res) => {
   const { name, email, password, phone } = req.body;
   const profileImg = req?.files?.profilePic?.[0]?.path;
 
-  // Validate email
+ 
   if (!emailValidator.validate(email)) {
     return res.status(400).json({ message: 'Invalid email address.' });
   }
@@ -28,7 +29,7 @@ export const createUser = async (req, res) => {
   }
 
   try {
-    // Check if user already exists
+    
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'Email already registered.' });
@@ -317,4 +318,99 @@ export const getUserBadges = async (req, res) => {
     }
   };
 
+
+
+  export const sendVerificationEmail = async (req, res) => {
+    try {
+      const { email } = req.body;
+  
+      if (!email) {
+        return res.status(400).json({ success: false, message: 'Email is required.' });
+      }
+  
+      // Generate a random 6-digit verification code
+      const verificationCode = Math.floor(100000 + Math.random() * 900000);
+  
+      // Save the verification code to the database
+      await VerificationCode.create({ email, code: verificationCode });
+  
+      // Configure Nodemailer
+      const transporter = nodemailer.createTransport({
+        service: 'gmail', // Use your email service
+        auth: {
+          user: process.env.EMAIL, // Your email from environment variable
+          pass: process.env.EMAIL_PASS // Your email password from environment variable
+        }
+      });
+  
+      // Define the HTML email content
+      const htmlContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+          <h2 style="text-align: center; color: #4CAF50;">Verify Your Email Address</h2>
+          <p style="font-size: 16px; color: #555;">
+            Hello,
+          </p>
+          <p style="font-size: 16px; color: #555;">
+            Thank you for signing up. To complete your email verification, please use the following code:
+          </p>
+          <div style="text-align: center; margin: 20px 0;">
+            <span style="display: inline-block; padding: 10px 20px; font-size: 20px; font-weight: bold; color: #4CAF50; background-color: #f9f9f9; border: 1px solid #4CAF50; border-radius: 5px;">
+              ${verificationCode}
+            </span>
+          </div>
+          <p style="font-size: 16px; color: #555;">
+            This code is valid for the next <strong>5 minutes</strong>. If you didn’t request this email, please ignore it.
+          </p>
+          <p style="font-size: 16px; color: #555;">
+            Best regards,<br>
+            Team Kartavya
+          </p>
+          <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
+          <p style="font-size: 12px; text-align: center; color: #aaa;">
+            If you have any questions, please contact us at <a href="mailto:support@kartvya.com" style="color: #4CAF50;">support@kartavya.com</a>.
+          </p>
+        </div>
+      `;
+  
+      // Send the email
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Verify Your Email Address',
+        html: htmlContent
+      });
+  
+      return res.status(200).json({ success: true, message: 'Verification email sent successfully.' });
+    } catch (error) {
+      console.error('Error sending verification email:', error);
+      return res.status(500).json({ success: false, message: 'Failed to send verification email.' });
+    }
+  };
+  
+
+
+export const verifyEmailCode = async (req, res) => {
+  try {
+    const { email, code } = req.body;
+
+    if (!email || !code) {
+      return res.status(400).json({ success: false, message: 'Email and verification code are required.' });
+    }
+
+    // Find the verification code in the database
+    const record = await VerificationCode.findOne({ email, code });
+
+    if (!record) {
+      return res.status(400).json({ success: false, message: 'Invalid verification code.' });
+    }
+
+    // Optionally, delete the verification record after successful verification
+    await VerificationCode.deleteOne({ email, code });
+
+    return res.status(200).json({ success: true, message: 'Email verified successfully.' });
+  } catch (error) {
+    console.error('Error verifying email:', error);
+    return res.status(500).json({ success: false, message: 'Failed to verify email.' });
+  }
+};
 

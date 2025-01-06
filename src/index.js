@@ -2,7 +2,6 @@ import express from 'express';
 import dotenv from "dotenv";
 import colors from "colors"
 import connectDB from './db/db.js';
-
 import UserRoutes from './routes/userRoutes.js';
 import UploadMediaRoutes from "./routes/uploadMediaRoutes.js"
 import MemberRoutes from "./routes/memberRoutes.js"
