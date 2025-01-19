@@ -6,8 +6,10 @@ import UserRoutes from './routes/userRoutes.js';
 import UploadMediaRoutes from "./routes/uploadMediaRoutes.js"
 import MemberRoutes from "./routes/memberRoutes.js"
 import CampaignRoutes from './routes/campaignRoutes.js'
+import PaymentRoutes from './routes/paymentRoutes.js'
 import bodyParser from 'body-parser';
 import cors from 'cors';
+import { v4 as uuidv4 } from 'uuid';
 
 
 
@@ -40,5 +42,6 @@ app.use("/user",UserRoutes)
 app.use("/upload",UploadMediaRoutes)
 app.use("/campaign",CampaignRoutes)
 app.use("/member",MemberRoutes)
+app.use("/donate",PaymentRoutes)
 
 

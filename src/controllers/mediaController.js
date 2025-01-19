@@ -51,6 +51,7 @@ export const uploadDonationMedia = async (req, res) => {
 
         // Handle video files
         if (req.files.donationVideos) {
+          // console.log(req.files.donationVideos)
             for (let file of req.files.donationVideos) {
                 let cloudinaryResponse;
                 let mediaUrl;
