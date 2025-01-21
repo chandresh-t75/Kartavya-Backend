@@ -39,6 +39,7 @@ export const createCampaign = async (req, res) => {
   
         // Save the new campaign to the database
         const savedCampaign = await newCampaign.save();
+
   
         // Respond with the created campaign data
         res.status(201).json(
