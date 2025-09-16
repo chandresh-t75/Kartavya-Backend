@@ -1,5 +1,5 @@
 import express from 'express';
-import DonationImage from "../models/donationimages.model.js";
+import DonationImage from "../models/donationImages.model.js";
 import DonationVideo from "../models/donationVideos.model.js";
 import { uploadFileToCloudinary } from '../utils/cloudinary.js';
 
